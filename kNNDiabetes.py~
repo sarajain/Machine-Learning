@@ -1,0 +1,309 @@
+# To run this program:
+# python kNNdiabetes.py
+#
+#choose one medical predictor and sort it from high to low
+#create a hash that will store the distances of each patient based on glucose where the key is the position in hash and value is the distance 
+#create another hash that will store the first hash but sorted
+#create two temp variables such as posLabel and negLabel that will be initialized to 0
+#in a for loop with length of second hash
+#   if the second hash value is == 1
+#      poslabel += 1
+#   else
+#      negLabel += 1
+#
+#outside of for loop:
+#if posLabel > negLabel
+#   return 1 (diabetic)
+#else
+#   return 0 (non-diabetic)
+
+
+import pdb
+import csv
+import collections
+import sys
+
+
+def myStr (number):
+    if int(number) == number:
+        return str(int(number))
+    else:
+        return str(number)
+
+# global variables
+
+sorted_hash = {}
+hash_collection = {}
+
+
+def performMachineLearning (filename, algorithm):
+ with open(filename) as inputCSV:
+
+    inputCSVdata = inputCSV.readlines()
+
+    #for every csv line
+
+    print '\nReading training-input data file %s..\n' % filename
+
+    for n, line in enumerate(inputCSVdata):
+
+        csvLine = inputCSVdata[n].rstrip()
+
+        #ignore the first row as it is a header
+
+        if n == 0:
+            continue            
+
+        # initialize projected-outcome to 0
+
+        #Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
+        #6,148,72,35,0,33.6,0.627,50,1
+
+        Pregnancies              = float(csvLine.split(",")[0])
+        Glucose                  = float(csvLine.split(",")[1])
+        BloodPressure            = float(csvLine.split(",")[2])
+        SkinThickness            = float(csvLine.split(",")[3])
+        Insulin                  = float(csvLine.split(",")[4])
+        BMI                      = float(csvLine.split(",")[5])
+        DiabetesPedigreeFunction = float(csvLine.split(",")[6])
+        Age                      = float(csvLine.split(",")[7])
+        ExpectedOutcome          = float(csvLine.split(",")[8])
+
+        #choose one medical predictor and sort it from high to low
+        #create a hash that will store the distances of each patient based on glucose
+        #  where the key is the position in hash and value is the distance 
+        #create another hash that will store the first hash but sorted
+        #create two temp variables such as posLabel and negLabel that will be initialized to 0
+        #in a for loop with length of second hash
+        #   if the second hash value is == 1
+        #      poslabel += 1
+        #   else
+        #      negLabel += 1
+        #
+        #outside of for loop:
+        #if posLabel > negLabel
+        #   return 1 (diabetic)
+        #else
+
+        #   return 0 (non-diabetic)
+
+        global hash_collection
+
+        if algorithm == 1:
+            hash_collection[Glucose] = ExpectedOutcome
+            
+        elif algorithm == 2:
+            hash_collection[Insulin] = ExpectedOutcome
+
+        elif algorithm == 3:
+            hash_collection[BloodPressure] = ExpectedOutcome
+
+        elif algorithm == 4:
+            hash_collection[Pregnancies] = ExpectedOutcome
+
+        elif algorithm == 5:
+            hash_collection[SkinThickness] = ExpectedOutcome
+
+        elif algorithm == 6:
+            hash_collection[BMI] = ExpectedOutcome
+
+        elif algorithm == 7:
+            hash_collection[Age] = ExpectedOutcome
+
+        # the for-loop ends at this column
+   
+    # now sort all CSV entries based on Glucose-key from highest to lowest numbers
+
+    global sorted_hash
+
+    sorted_hash = sorted(hash_collection.iterkeys())
+
+    inputCSV.close()
+
+#  this is the end of reading training_diabetes.csv to build our machine-learning forecast
+
+
+# projOutcome function below projects the outcome for passed candidate based
+# on training data whether the candidate is going to be diabetic or not.
+
+def projectOutcome (x, kValues):
+
+    hash_for_distances = {}
+    hash_saving_only_distances = {}
+
+    #for i in range(len(sorted_hash)):
+
+    global sorted_hash
+    global hash_collection
+
+    hash_saving_distances_and_outcome = {}
+
+    for featureValue in sorted_hash:
+        #using the Manhatten distance formula - kNN algo; featureValue: Glucose, ..
+        distance = abs(featureValue - x)
+        hash_saving_only_distances[featureValue] = distance
+        hash_saving_distances_and_outcome[distance] = hash_collection[featureValue]
+        
+    sorted_hash_for_distances = {}
+    sorted_hash_for_distances = sorted(hash_saving_distances_and_outcome.iterkeys())[:kValues]
+
+    isDiabetic = 0
+    isNotDiabetic = 0
+
+    for i in sorted_hash_for_distances:
+        diabeticValue = hash_saving_distances_and_outcome[i]
+
+        if (diabeticValue == 1):
+            isDiabetic += 1
+        else:
+            isNotDiabetic += 1
+
+    projOutcome = 0
+
+    if isDiabetic > isNotDiabetic:
+            projOutcome = 1
+
+    return projOutcome
+
+# this is the end off projectOutcome
+
+
+# def readingAndAnalyzingInputFile() reads the test-CSV and forecasts diabetis
+# for each patient in the CSV.
+
+def readingAndAnalyzingInputFile (testFileName, algorithm):
+
+  with open(testFileName) as inputCSV:
+
+    #intitialize projOutcomeFor1, projOutcomeFor0, mispredictedAsNonDiabetic, mispredictedAsDiabetic = 0 
+
+    projOutcomeFor1 = 0
+    projOutcomeFor0 = 0
+    mispredictedAsNonDiabetic = 0
+    mispredictedAsDiabetic = 0
+    expectedOutcomeFor1 = 0
+    expectedOutcomeFor0 = 0
+
+    inputCSVdata = inputCSV.readlines()
+
+    #for every csv line
+
+    print 'Reading test-input data file %s..\n' % testFileName
+
+    for n, line in enumerate(inputCSVdata):
+
+        csvLine = inputCSVdata[n].rstrip()
+
+        #ignore the first row as it is a header
+
+        if n == 0:
+            continue            
+
+        # initialize projected-outcome to 0
+
+        #Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
+        #6,148,72,35,0,33.6,0.627,50,1
+
+        Pregnancies              = float(csvLine.split(",")[0])
+        Glucose                  = float(csvLine.split(",")[1])
+        BloodPressure            = float(csvLine.split(",")[2])
+        SkinThickness            = float(csvLine.split(",")[3])
+        Insulin                  = float(csvLine.split(",")[4])
+        BMI                      = float(csvLine.split(",")[5])
+        DiabetesPedigreeFunction = float(csvLine.split(",")[6])
+        Age                      = float(csvLine.split(",")[7])
+        ExpectedOutcome          = float(csvLine.split(",")[8])
+
+        candidate = Glucose
+        variable = "Glucose"
+
+        if algorithm == 2:
+            candidate = Insulin
+            variable = "Insulin"
+
+        elif algorithm == 3:
+            candidate = BloodPressure
+            variable = "BloodPressure"
+
+        elif algorithm == 4:
+            candidate = Pregnancies
+            variable = "Pregnancies"
+
+        elif algorithm == 5:
+            candidate = SkinThickness
+            variable = "SkinThickness"
+
+        elif algorithm == 6:
+            candidate = BMI
+            variable = "BMI"
+
+        elif algorithm == 7:
+            candidate = Age
+            variable = "Age"
+
+
+        projOutcome = projectOutcome(candidate, 2)
+
+        if projOutcome == 1:
+            projOutcomeFor1 += 1
+        else:
+            projOutcomeFor0 += 1
+        
+        if ExpectedOutcome == 1:
+            expectedOutcomeFor1 += 1
+            if ExpectedOutcome != projOutcome:
+                mispredictedAsNonDiabetic += 1
+        else:
+            expectedOutcomeFor0 += 1
+            if ExpectedOutcome != projOutcome:
+                mispredictedAsDiabetic += 1
+
+    # for-loop ends here
+    
+    inputCSV.close()
+
+    ratioPercentageFor1 = (projOutcomeFor1*100.0)/expectedOutcomeFor1
+    ratioPercentageFor0 = (projOutcomeFor0*100.0)/expectedOutcomeFor0
+
+    print '\n'
+    print 'Algorithm for %s:\n' %variable
+    print '\n'
+    print 'ratioPercentageFor1: %f\n' % ratioPercentageFor1
+    print 'ratioPercentageFor0: %f\n' % ratioPercentageFor0
+    #print '\n'
+    print 'mispredictedAsNonDiabetic: %f\n' % mispredictedAsNonDiabetic
+    print 'mispredictedAsDiabetic: %f\n' % mispredictedAsDiabetic
+
+    #print '\n'
+    print 'expectedOutcomeFor1: %f\n' % expectedOutcomeFor1
+    print 'projOutcomeFor1: %f\n' % projOutcomeFor1
+
+    #print '\n'
+    print 'expectedOutcomeFor0: %f\n' % expectedOutcomeFor0
+    print 'projOutcomeFor0: %f\n' % projOutcomeFor0
+
+
+def main ():
+    performMachineLearning('training_diabetes.csv', 1)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 1)
+
+    performMachineLearning('training_diabetes.csv', 2)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 2)
+
+    performMachineLearning('training_diabetes.csv', 3)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 3)
+
+    performMachineLearning('training_diabetes.csv', 4)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 4)
+
+    performMachineLearning('training_diabetes.csv', 5)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 5)
+
+    performMachineLearning('training_diabetes.csv', 6)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 6)
+
+    performMachineLearning('training_diabetes.csv', 7)
+    readingAndAnalyzingInputFile('test_diabetes.csv', 7)
+
+
+main()
